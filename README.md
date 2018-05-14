@@ -1,5 +1,5 @@
 # OJcryo
-###### A suite of Odd-Job scripts for use with in cryo-em data processing.
+###### A suite of Odd-Job scripts for cryo-em data processing.
 
 ### TOOLS AVAILABLE:
 
