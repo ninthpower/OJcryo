@@ -12,6 +12,8 @@ OJcryo_remove_duplicates: Removes any duplicate particles from a Relion join_par
 
 #### Micrograph Drift Correction:
 
-OJcryo_motioncor2_tiff_batch: Simple implementation of a TIFF batch mode for motioncor2.
+OJcryo_m2_tiff_batch: Simple implementation of a TIFF batch mode for motioncor2.
 
-OJcryo_tiff_unblur_parallel: Implements a parallel version of tif2mrc->clip->binvol->unblur.
+Ojcryo_unblur: Implements a parallel, batch version of unblur.
+
+OJcryo_unblur_tiff: Implements the same batch functionality as Ojcryo_unblur_parallel, but takes .tif files as inputs, adjusts using gain reference, bins, and then unblurs (tif2mrc->clip->binvol->unblur).
