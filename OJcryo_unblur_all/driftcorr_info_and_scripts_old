@@ -1,0 +1,54 @@
+#!/bin/bash
+
+# NOTE: all but the last parameter are tif files. last param is the gain reference.
+
+gainref=${!#}	# get last parameter -> gain reference
+UB=/programs/x86_64-linux/unblur/1.0.2/bin/unblur	# default to unblur 1.0.2
+
+#n=(($#-1))
+
+# loop through all the files in the parameter array except for the gain reference at the end
+for i in "${@:1:$(($#-1))}"; do
+###################
+# " Covert Tif to mrc "
+###################
+  tif2mrc $i ${i}.mrc > output.txt
+
+####################################"
+# "Gain reference correction and bin 2"
+####################################"
+  clip mult -n 16 ${i}.mrc $gainref ${i}_gaincorr.mrc >> output.txt
+  binvol -x 2 -y 2 -z 1 ${i}_gaincorr.mrc ${i}_gaincorr_bin2.mrc >> output.txt
+
+###################
+# " Drift correction "
+###################
+  $UB << eof >> output.txt # unblur << eof #changed this line to the below, using direct path to unblur
+  ${i}_gaincorr_bin2.mrc
+  30
+  ${i}_aligned.mrc
+  ${i%.mrc}_shifts.txt
+  1.3
+  YES
+  1.065
+  300
+  0
+  NO
+  NO
+eof
+
+###############################################################
+#" Move, rename, and delete junk of ${i}_driftcorr.mrc "
+###############################################################
+  mv ${i}_aligned.mrc driftcorr_mrc
+  mv ${i} Finished_tif
+  rename .tif_ _ driftcorr_mrc/${i}_aligned.mrc
+  rm ${i}.mrc  ${i}_gaincorr.mrc ${i}_gaincorr_bin2.mrc
+#  rm ${i}_gaincorr_bin2_Log.txt	# this file doesn't seem to be generated... so we can't remove it.
+
+###########################
+#echo " Finish and $n images left "
+###########################
+done
+
+exit 1

@@ -1,0 +1,92 @@
+#!/bin/bash
+
+# v0.1 by Austin Dixon - Rockefeller University
+# This program jerry-rigs multi-tiff processing in Motioncor2.
+
+##### HELP/USAGE #####
+display_usage() {
+  printf "*********************************
+Usage:\nmotioncor2_tiff_batch <gainref> <patch> <iter> <tol> <throw> <trunc> <kV> <A/pix> <fmdose> <binning>\n
+gainref=      # gain reference
+patch=        # number of local alignment patches (patch x patch) motioncor2 will do on each image
+iter=         # number of alignment iterations, typically 10
+tol=          # tolerance of alignment accuracy, typically 0.5
+throw=        # number of initial frames to discard
+trunc=        # number of trailing frames to discard
+kV=           # Voltage in kV
+apix=         # Angstroms per pixel
+fmdose=       # ?????
+bin=          # binning amount\n"
+
+  printf "\nEXAMPLE: motioncor2_tiff_batch GR216_vf_cw90.mrc 5 10 0.5 1 2 300 1.01 1.2 2\n*********************************\n"
+}
+
+# check whether user supplied help tag
+if [[ ($1 == "--help") ||  ($1 == "-h") ||  ($1 == "--h") || ($1 == "-help") ]]
+then
+    	display_usage
+        exit 0
+fi
+
+# check for argument count
+if [ $# -lt 10 ]
+then
+    	printf "\nYou supplied $# arguments, need 10!\n"
+        display_usage
+        exit 1
+fi
+
+
+### Assign Variables ###
+gainref=$1	# gain reference
+patch=$2        # number of local alignment patches (patch x patch) motioncor2 will do on each image
+iter=$3		# number of alignment iterations, typically 10
+tol=$4		# tolerance of alignment accuracy, typically 0.5
+throw=$5	# number of initial frames to discard
+trunc=$6	# number of trailing frames to discard
+kV=$7		# Voltage in kV
+apix=$8		# Angstroms per pixel
+fmdose=$9	# frame dosage
+bin=${10}		# binning amount
+
+
+# get total number of tifs in this folder
+numtiffs=$(ls -F | grep .tif | wc -l)
+
+# make these directories if not made already
+mkdir -p motioncor_mrc
+mkdir -p Finished_tif
+
+
+################## MAIN SCRIPT #################
+# Prep for showing number of images left
+#printf "### Images Remaining: ###\n"
+
+# Perform Motioncor2 on all the tiff files in the working directory
+for i in *.tif; do
+  echo -en "\r\033[KImages Remaining: $numtiffs\n"		# show number of files remaining to be processed
+
+######## DEPRECATED  file=$(echo ${i} | cut -f 1 -d '.')   # get filename without extension
+  file=$(basename -- "$i")	# get filename alone
+  extension="${file##*.}"	# remove filename extension
+  file="${file%.*}"		# get filename sans extension
+
+###################
+# " Drift correction "
+###################
+  motioncor2 -InTiff ${i} -OutMrc motioncor_mrc/$file.mrc -Gain $gainref -Patch $patch $patch -Iter $iter -Tol $tol -FtBin $bin -FmDose $fmdose -PixSize $apix -Kv $kV -Throw $throw -Trunc $trunc -Gpu 0 1 > output.txt
+
+
+###############################################################
+#" Move tiffs to Finished_tifs "
+###############################################################
+  mv ${i} Finished_tif
+
+###########################
+# " Show remaining images "
+###########################
+  numtiffs=$[$numtiffs-1]
+done
+
+exit 1
+

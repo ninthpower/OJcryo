@@ -1,0 +1,104 @@
+#!/bin/bash
+
+# By Austin Dixon - Rockefller University
+# v0.11 - changed the way the script handles filenames to get around names with multiple ".".
+
+# NOTE: Everything after the 9th parameter is a tif file.
+gainref=$1	# gain reference
+imgperstack=$2	# images per stack
+apix=$3		# Angstroms per pixel
+dosefil=$4	# Dose Filter? [YES/NO?]
+exppf=$5	# Exposure per frame
+kV=$6		# Voltage in kV
+pexpam=$7	# Pre-exposure amount
+saveframes=$8	# Save Aligned Frames? [YES/NO?]
+expopt=$9	# Expert Options? [YES/NO?]
+UB=/programs/x86_64-linux/unblur/1.0.2/bin/unblur	# default to unblur 1.0.2
+
+: '
+# DEBUGGING
+echo "$1"
+echo "$2"
+echo "$3"
+echo "$4"
+echo "$5"
+echo "$6"
+echo "$7"
+echo "$8"
+echo "$9"
+#echo "${10}"
+#echo "$11"
+#echo "$12"
+#echo "$13"
+printf "\n\n"
+
+
+#printf "${@:9}\n"
+
+# check to make sure the tenth position is where tifs start!
+#for i in "${@:10:$#}"; do
+#  echo "${i}"
+#done
+exit 0
+'
+
+
+################## MAIN SCRIPT #################
+# LOOP through arguments passed to this array and only execute unblur on the
+# .tif files, not any of the other parameters.
+for i in "${@:10:$#}"; do
+###################
+# " Covert Tif to mrc "
+###################
+###  file=$(echo ${i} | cut -f 1 -d '.')   # get filename without extension
+  file=$(basename -- "$i")	# get filename alone
+#  echo "og filename: $file"
+  extension="${file##*.}"	# remove filename extension
+#  echo "ext: $extension"
+  file="${file%.*}"             # get filename sans extension
+#  echo "nameonly: $file"
+#  echo "gaincorr: ${file}_gaincorr.mrc"
+  tif2mrc $i $file.mrc > output.txt
+
+####################################"
+# "Gain reference correction and bin 2"
+####################################"
+  clip mult -n 16 $file.mrc $gainref ${file}_gaincorr.mrc >> output.txt			# REMEMBER!! variables that you want to use as prefixes for other variables/filenames must be in the form ${var}_suffix.ext!!!
+  binvol -x 2 -y 2 -z 1 ${file}_gaincorr.mrc ${file}_gaincorr_bin2.mrc >> output.txt
+
+###################
+# " Drift correction "
+###################
+  $UB << eof >> output.txt # unblur << eof #changed this line to the below, using direct path to unblur
+  ${file}_gaincorr_bin2.mrc
+  $imgperstack
+  ${file}_aligned.mrc
+  ${file}_shifts.txt
+  $apix
+  $dosefil
+  $exppf
+  $kV
+  $pexpam
+  $saveframes
+  $expopt
+eof
+
+#printf "\nUNBLUR FINISHED\n"
+
+###############################################################
+#" Move, rename, and delete junk of ${i}_driftcorr.mrc "
+###############################################################
+  mv ${file}_aligned.mrc driftcorr_mrc
+  mv ${file}_shifts.txt driftcorr_mrc
+  mv ${i} Finished_tif
+  #rename .tif_ _ driftcorr_mrc/${i}_aligned.mrc
+  rm ${file}.mrc  ${file}_gaincorr.mrc ${file}_gaincorr_bin2.mrc
+#  rm ${i}_gaincorr_bin2_Log.txt	# this file doesn't seem to be generated... so we can't remove it.
+
+###########################
+#echo " Finish and $n images left "
+###########################
+done
+
+exit 1
+

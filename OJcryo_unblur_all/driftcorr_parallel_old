@@ -1,0 +1,116 @@
+#!/bin/bash
+
+# v0.1 by Austin Dixon
+# This program runs unblur on .tif files in parallel in batch mode as opposed to on a single core.
+# It is dependent on: tif2mrc, clip, binvol, and unblur (v 1.0.2).
+
+##### HELP/USAGE #####
+display_usage() {
+	printf "Usage:\n
+		driftcorr_parallel <gain reference> <num_cores> <images_per_stack> <A/pix> <Apply Dose filter? [YES/NO?]> <exposure_per_frame> <kV> <Pre-exposure amount> <Save Aligned Frames? [YES/NO?]> <Set Expert Options? [YES/NO?]>"
+}
+
+# check for argument count
+if [ $# -le 10 ]
+then
+	echo "You supplied $# arguments and need 10"
+	display_usage()
+	exit 1
+fi
+
+# check whether user supplied help tag
+if [[ ($# == "--help") ||  $# == "-h" ]]
+then
+	display_usage
+	exit 0
+fi
+
+
+############## MAIN SCRIPT ##############
+# set-up variables for parallelization
+GAIN_REF=$1					# first parameter is the gain reference for unblur to use
+NUM_CORES=$2					# (c) second parameter is number of cores to use
+
+# vars and calculations for parallelization
+# you can find an explanation of what I'm doing here: https://math.stackexchange.com/questions/2663633/what-is-the-actual-name-of-this-binning-efficiency-algorithm-i-made-up
+LIST_FILES=(*.tif)					# get an array of .tiff files in this directory
+NUM_FILES=${#LIST_FILES[@]}			# (f) get number of .tiffs in this directory
+q_FILES=$((NUM_FILES / NUM_CORES))		# (q) number of files in each c_q core
+c_r_CORES=$((NUM_FILES % NUM_CORES))		# (c_r) number of remaining cores with p_r processes each
+c_q_CORES=$((NUM_CORES - c_r_CORES))		# (c_q) number of cores with q processes each
+r_FILES=$(( (NUM_FILES - (c_q_CORES * q_FILES)) / c_r_CORES ))	# (f_r) number of files in each c_r_CORES
+TOTAL_Q_FILES=$((c_q_CORES * q_FILES))
+TOTAL_R_FILES=$((NUM_FILES - TOTAL_Q_FILES))
+p=0		# iterator
+
+: '
+# DEBUGGING
+printf "gain=$GAIN_REF
+cores=$NUM_CORES
+list of files=$LIST_FILES
+num files=$NUM_FILES
+q files=$q_FILES
+r files=$r_FILES
+c_r cores=$c_r_CORES
+c_q cores=$c_q_CORES\n"
+'
+
+# make these directories if not made already
+mkdir -p driftcorr_mrc
+mkdir -p Finished_tif
+
+
+####-------- Parallel When files < cores --------####
+# IF number of files < number of cores -> just fill in one file for each core until done
+if ((NUM_FILES < NUM_CORES));
+then
+	# Show what we're doing...
+	echo "**************************************************************************"
+	echo "Executing tif2mrc -> clip -> binvol -> unblur on $NUM_FILES files on $((NUM_CORES-NUM_FILES+1)) cores."
+	echo "**************************************************************************"
+
+	for ((i=0; i<NUM_FILES; i++)); do
+		#echo "core$i = ${LIST_FILES[i]}."
+		/rugpfs/fs0/odonnell_lab/scratch/adixon/Other_Scripts/driftcorr_parallel_project/driftcorr_info_and_scripts "${LIST_FILES[i]}" "$GAIN_REF" &
+	done
+
+####-------- Parallel Binning Algorithm (files > cores) --------####
+else
+	# show the user what we're doing
+	echo "**************************************************************************"
+	echo "Executing tif2mrc -> clip -> binvol -> unblur on $NUM_FILES files on $NUM_CORES cores."
+	echo "**************************************************************************"
+
+	# fill in c_q_CORES with q_FILES each
+	for ((i=0; i<c_q_CORES; i++)); do
+		#echo "core$i = ${LIST_FILES[@]:p:q_FILES} files."
+		# pass files to our unblur script
+		/rugpfs/fs0/odonnell_lab/scratch/adixon/Other_Scripts/driftcorr_parallel_project/driftcorr_info_and_scripts "${LIST_FILES[@]:p:q_FILES}" "$GAIN_REF" &
+		p=$((p + q_FILES))			# increment p by the number of files in this chunk
+
+	done
+
+	# fill in remaining c_r_CORES with r_FILES each
+	for ((i=0; i<c_r_CORES; i++)); do
+		#echo "core$i = ${LIST_FILES[@]:p:r_FILES}"
+		# pass files to our unblur script
+		/rugpfs/fs0/odonnell_lab/scratch/adixon/Other_Scripts/driftcorr_parallel_project/driftcorr_info_and_scripts "${LIST_FILES[@]:p:r_FILES}" "$GAIN_REF" &
+		p=$((p +r_FILES))
+	done
+fi
+
+## Show spinner so user knows it's still working...
+PID=$!
+i=1
+sp="/-\|"
+echo -n ' '
+while [ -d /proc/$PID ]
+do
+  printf "\b${sp:i++%${#sp}:1}"
+done
+
+wait			# wait till all subprocesses are done
+
+echo "FINISHED!"	
+
+exit 1
