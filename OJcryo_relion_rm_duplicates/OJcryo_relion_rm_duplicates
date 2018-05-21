@@ -1,0 +1,91 @@
+############################################################################
+# OJcryo_relion_rm_duplicates.sh removes all duplicate particles from 
+# a join_particles.star file made in RELION. It should be run directly
+# after joining star files *if* you get a warning that you have duplicates.
+#
+# To use: navigate to the job you want to remove duplicates from in JoinStar.
+# folder in your project directory. 
+# Then call sh <path to this script> <join_particles.star to remove duplicates>.
+# This script will write a file called join_particles_no_duplicates.star in
+# the folder you are in.
+#
+#
+# Written by Austin Dixon - Rockefeller University
+#
+############################################################################
+
+
+#!/bin/bash
+
+display_usage()
+{
+  printf "****************************\n- Navigate to a JoinStar/ folder that contains a join_particles.star file."
+  printf "\n- RUN: OJcryo_relion_rm_duplicates join_particles.star"
+  printf "\n- Output is join_particles_no_duplicates.star\n****************************\n"
+}
+
+# check for input
+if [ ! $1 ]
+then
+ printf "ERROR: No input given!\n"
+ display_usage
+ exit 0
+fi
+
+# check whether user supplied help tag
+if [[ ($1 == "--help") ||  ($1 == "-h") ||  ($1 == "--h") || ($1 == "-help") ]]
+then
+        display_usage
+        exit 0
+fi
+
+#------------------------------------------#
+
+### MAIN SCRIPT ###
+# get absolute paths of input
+INPUT="$(readlink -f $1)"
+
+# get number of particles before removing dupes
+wc -l $INPUT > garbage.txt
+read lines garbage < garbage.txt
+before=$(echo $lines)
+
+# get header from star file (column names)
+linenum=0		# current line to read in
+
+### Cycle through lines until we find one that starts with a number ###
+# (that means it's the first particle! we do this so that no matter
+#  how Relion .star headers change, this program should still work!)
+while read line; do
+ if [[ "$line" =~ ^[0-9] ]] ; then break;	# regex is "if line starts (^) with a digit [0-9]
+ else 
+   linenum=$[ $linenum + 1 ]			# increment line number counter
+   ## DEBUG echo "$line"
+ fi
+done <$INPUT					# pass input .star to the read line statement
+## DEBUG echo "$linenum"
+
+# setting up to use sed to get rid of newline created after append
+d='d'
+sednum=$(($linenum + 1))$d
+
+# get .star header
+head -n $linenum $INPUT > join_particles_no_duplicates.star
+
+# remove newline created when appending the unique particles
+sed -i $sednum join_particles_no_duplicates.star
+
+# get unique particles from the joined star file
+awk '!a[$6]++' $INPUT >> join_particles_no_duplicates.star
+
+# remove newline created when appending the unique particles
+sed -i $sednum join_particles_no_duplicates.star
+
+# get lines in file after removal of particles
+wc -l join_particles_no_duplicates.star > garbage.txt
+read lines garbage < garbage.txt
+after=$(echo $lines)
+
+# remove temp files
+rm garbage.txt
+echo "$[$after-33] particles remaining after removal of $[$before-$after]."
