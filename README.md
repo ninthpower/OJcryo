@@ -9,7 +9,7 @@ OJcryo_relion_screen: A simple interactive micrograph screening program that alo
 
 OJcryo_class_table: Creates a tab-delimited .txt from a 2D/3D model.star file.
 
-OJcryo_remove_duplicates: Removes any duplicate particles from a Relion join_particles.star file.
+OJcryo_relion_rm_duplicates: Removes any duplicate particles from a Relion join_particles.star file.
 
 
 #### Micrograph Drift Correction:
