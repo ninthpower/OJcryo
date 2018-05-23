@@ -5,7 +5,7 @@
 
 #### RELION specific:
 
-OJcryo_relion_screen: A simple interactive micrograph screening program that aloows the removal of dirty/unwanted images from a cryo-EM image pool.
+OJcryo_relion_screen: A simple interactive micrograph screening program that allows the removal of dirty/unwanted images from a cryo-EM image pool.
 
 OJcryo_class_table(soon!): Creates a tab-delimited .txt from a 2D/3D model.star file.
 
