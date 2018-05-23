@@ -6,6 +6,7 @@
 #
 # By Austin Dixon
 
+##### IMPORTS AND HELPER FUNCTIONS #####
 import Tkinter
 import tkMessageBox
 import subprocess
@@ -16,15 +17,15 @@ def Usage():
   """Returns the usage for this script."""
   print "Usage:\n-----------------------------------------------"
   print "1) Navigate to an Import/ folder in your RELION project that has a micrographs.star inside.\n"
-  print "2) $0 <output.star (optional)>\n"
-  print "3) Each micrograph that was imported will be displayed. After viewing, press <Escape>.\n"
+  print "2) Run: OJcryo_relion_screen.py <output_filename.star (optional)>\n"
+  print "3) One-by-one, each micrograph that was imported will be displayed. Exit the micrograph with the mouse or with <Escape>.\n"
   print "4) A new window will pop up. To save the micrograph in your set, select Yes (or press <Enter>).\n   Otherwise select No (or press <Escape>)"
   print "-------------------------------------------------"
 
 
 def verify_file(filename):
   """Returns the name of a filename to write to. If file already exists, query user for overwrite 
-  or new filename"""
+  or new filename."""
 
   oexists = os.path.isfile(filename)			# check if the filename given exists
   if (oexists):						# IF it exists, query user for overwrite
@@ -35,13 +36,30 @@ def verify_file(filename):
       
     if (overwrite == "Y"):			# IF yes, overwrite the given file
       return filename
-    else:					# IF no, quit with message
-      print "\nExiting..."
-      sys.exit()
+    else:					# IF no, ask for new filename or quit with message
+      overwrite = "?"				# reset overwrite
+      while (overwrite not in ["F", "Q"]):	# keep asking for input until we get a proper response
+        overwrite = raw_input("Would you like to provide a new filename or quit? (F/Q)")	# get answer to question and store it in overwrite
+        overwrite = overwrite.upper()		# force uppercase
+      
+      if (overwrite == "Q"):			# Quit if answered 'Q'
+        print "\nExiting..."
+        sys.exit()
+
+      elif (overwrite == "F"):		# Get new filename if answered 'F'
+        filename = raw_input("What would you like the output filename to be?")	# get new filename
+	filename = verify_file(filename)	# run that name through the script just in case IT already exists!
+	return filename
 
   else:			# ELSE the file doesn't already exist, plain return
     return filename
 
+
+#-------------- MAIN SCRIPT --------------#
+# checking for help flag
+if (sys.argv[1] in ["help", "--help", "-help", "--h", "-h", "usage", "-usage", "--usage"]):
+  Usage()	# show usage
+  sys.exit()	# quit
 
 ####### PARSE INPUT ########
 ### open micrographs.star file
@@ -50,7 +68,7 @@ try:
   ##DEBUGstar = open("tester.star", "r")
 except:
   print "\nThere doesn't appear to be a micrographs.star in this directory!\n"
-  Usage()		# will exit script itself
+  Usage()
   sys.exit()
 
 
