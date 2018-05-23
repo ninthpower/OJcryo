@@ -57,9 +57,12 @@ def verify_file(filename):
 
 #-------------- MAIN SCRIPT --------------#
 # checking for help flag
-if (sys.argv[1] in ["help", "--help", "-help", "--h", "-h", "usage", "-usage", "--usage"]):
-  Usage()	# show usage
-  sys.exit()	# quit
+if (sys.argv[1]):
+  if (sys.argv[1] in ["help", "--help", "-help", "--h", "-h", "usage", "-usage", "--usage"]):
+    Usage()	# show usage
+    sys.exit()	# quit
+
+sys.exit()
 
 ####### PARSE INPUT ########
 ### open micrographs.star file
