@@ -1,3 +1,0 @@
-aust
-yo
-mama
