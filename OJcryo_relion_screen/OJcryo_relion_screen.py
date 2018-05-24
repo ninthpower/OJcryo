@@ -115,7 +115,8 @@ for file in star_list:
     # which is ALWAYS two directories above the import folder.
     path = "../../%s" % file
     #print path	
-    sub = subprocess.call(["relion_display", "--i", path, "--scale", "0.2", "--sigma_contrast", "3", "--black", "0", "--white", "0", "--lowpass", "20", "--angpix", "1"])
+    #sub = subprocess.call(["relion_display", "--i", path, "--scale", "0.2", "--sigma_contrast", "3", "--black", "0", "--white", "0", "--lowpass", "20", "--angpix", "1"])
+    sub = subprocess.call(["relion_display", "--i", path, "--scale", "0.2", "--black", "0", "--white", "0", "--lowpass", "20", "--angpix", "1"])
     result = tkMessageBox.askyesno("Micrograph Screening", "Put this micrograph in new set?")
   
     # Write result to screened list
