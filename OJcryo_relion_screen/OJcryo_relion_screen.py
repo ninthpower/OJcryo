@@ -69,14 +69,12 @@ try:
   star = open("micrographs.star", "r")
   ##DEBUGstar = open("tester.star", "r")
 except IOError:
-  pass
-try:
-  star = open("join_mics.star", "r")	# try and open either of these micrograph star files.
-except IOError:
-  print "\nThere doesn't appear to be a micrographs.star or join_mics.star in this directory!\n"
-  Usage()
-  sys.exit()
-
+  try:
+    star = open("join_mics.star", "r")	# try and open either of these micrograph star files.
+  except IOError:
+    print "\nThere doesn't appear to be a micrographs.star or join_mics.star in this directory!\n"
+    Usage()
+    sys.exit()
 
 ### check if output file exists, give options if it does
 try:
@@ -95,7 +93,7 @@ star_list = star.readlines()
 # remove newlines
 i=0
 while (i < len(star_list)):
-  star_list[i] = star_list[i][:-1]
+  star_list[i] = star_list[i].rstrip()
   i+=1
 
 # close input star file, we have everything by now!
@@ -109,7 +107,7 @@ output_data = []
 ### cycle through and display micrograph and ask user to keep (YES/ENTER) or remove from set (NO/ESC)
 for file in star_list:
   # Just write any header info straight to output_data array
-  if (file[len(file)-3:] != "mrc"):
+  if ("mrc" not in file):
     #print file
     output_data.append(file)
   
@@ -118,16 +116,14 @@ for file in star_list:
     # NOTE: no matter where the micrographs are, the path in the star file is always relative to the main relion directory, 
     # which is ALWAYS two directories above the import folder.
     path = "../../%s" % file
-    #print path	
     try:
       call = ["relion_display", "--i", path, "--scale", "0.2", "--black", "0", "--white", "0", "--lowpass", "20", "--angpix", "1"]		# the call to relion_display
       sub = subprocess.check_call(call)		# check to see if this call is safe, if not, an exception will be raised
-      #sub = subprocess.call(call)		# if we got to this point it is safe to call relion_display
+      sub = subprocess.call(call)		# if we got to this point it is safe to call relion_display
     except subprocess.CalledProcessError:	# handle relion_display error
       print "\nOJcryo: This could be happening if you don't have permissions to view the micrograph or if it doesn't exist in the .star's relative path.\n"
       sys.exit()
 
-#    sys.exit()
     result = tkMessageBox.askyesno("Micrograph Screening", "Put this micrograph in new set?")
   
     # Write result to screened list
