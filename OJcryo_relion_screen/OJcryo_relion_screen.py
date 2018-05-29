@@ -119,7 +119,6 @@ for file in star_list:
     try:
       call = ["relion_display", "--i", path, "--scale", "0.2", "--black", "0", "--white", "0", "--lowpass", "20", "--angpix", "1"]		# the call to relion_display
       sub = subprocess.check_call(call)		# check to see if this call is safe, if not, an exception will be raised
-      sub = subprocess.call(call)		# if we got to this point it is safe to call relion_display
     except subprocess.CalledProcessError:	# handle relion_display error
       print "\nOJcryo: This could be happening if you don't have permissions to view the micrograph or if it doesn't exist in the .star's relative path.\n"
       sys.exit()
