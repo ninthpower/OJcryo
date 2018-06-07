@@ -3,13 +3,6 @@
 # a join_particles.star file made in RELION. It should be run directly
 # after joining star files *if* you get a warning that you have duplicates.
 #
-# To use: navigate to the job you want to remove duplicates from in JoinStar.
-# folder in your project directory. 
-# Then call sh <path to this script> <join_particles.star to remove duplicates>.
-# This script will write a file called join_particles_no_duplicates.star in
-# the folder you are in.
-#
-#
 # Written by Austin Dixon - Rockefeller University
 #
 ############################################################################
@@ -33,7 +26,7 @@ then
 fi
 
 # check whether user supplied help tag
-if [[ ($1 == "--help") ||  ($1 == "-h") ||  ($1 == "--h") || ($1 == "-help") ]]
+if [[ ($1 == "--help") ||  ($1 == "-h") ||  ($1 == "--h") || ($1 == "-help") || ($1 == "usage")]]
 then
         display_usage
         exit 0
@@ -57,24 +50,27 @@ linenum=0		# current line to read in
 # (that means it's the first particle! we do this so that no matter
 #  how Relion .star headers change, this program should still work!)
 while read line; do
- if [[ "$line" =~ ^[0-9] ]] ; then break;	# regex is "if line starts (^) with a digit [0-9]
+### if [[ "$line" =~ ^[0-9] ]] ; then break;	# regex is "if line starts (^) with a digit [0-9]
+ if [[ "$line" =~ ^_ || "$line" =~ ^data || "$line" =~ ^loop  || "$line" =~ ^\s*$ ]]			# regex says "if line starts (^) with "_" or the strings "data" or "loop" or it is an empty string... 
+ then
+	#printf "$line\n"
+	linenum=$[ $linenum + 1 ]			# increment line number counter because the current line is part of the header
  else 
-   linenum=$[ $linenum + 1 ]			# increment line number counter
-   ## DEBUG echo "$line"
+   break		# break while loop because we found the beginning of the particles/micrographs
  fi
 done <$INPUT					# pass input .star to the read line statement
-## DEBUG echo "$linenum"
 
 # setting up to use sed to get rid of newline created after append
 d='d'
 sednum=$(($linenum + 1))$d
 
-# get .star header
+# get .star header for linenum lines
 head -n $linenum $INPUT > join_particles_no_duplicates.star
 
 # remove newline created when appending the unique particles
 sed -i $sednum join_particles_no_duplicates.star
 
+###### HERE! WE NEED TO FIGURE OUR GETOPTS SO THAT WE CAN USE THE SAME SCRIPT FOR BOTH MICROGRAPHS/MOVIES AND PARTICLES ######
 # get unique particles from the joined star file
 awk '!a[$6]++' $INPUT >> join_particles_no_duplicates.star
 
@@ -88,4 +84,4 @@ after=$(echo $lines)
 
 # remove temp files
 rm garbage.txt
-echo "$[$after-33] particles remaining after removal of $[$before-$after]."
+echo "$[$after-$linenum] particles remaining after removal of $[$before-$after]."
