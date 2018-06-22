@@ -19,7 +19,7 @@ fmdose=       # frame dosage (in e/A^2)
 bin=          # binning amount\n"
 defects=      # defects text file
 
-  printf "\nEXAMPLE: motioncor2_tiff_batch GR216_vf_cw90.mrc 5 10 0.5 1 2 300 1.01 1.2 2\n*********************************\n"
+  printf "\nEXAMPLE: motioncor2_tiff_batch GR216_vf_cw90.mrc 5 10 0.5 1 2 300 1.01 1.2 2 defects.txt\n*********************************\n"
 }
 
 # check whether user supplied help tag
