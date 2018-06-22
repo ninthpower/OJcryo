@@ -14,8 +14,6 @@
 
 - **OJcryo_m2_tiff_batch:** Simple implementation of a TIFF batch mode for motioncor2 (requires GPU).
 
-- **OJcryo_unblur(soon!):** Implements a parallel, batch version of unblur.
-
 - **OJcryo_unblur_tiff:** Implements the same batch functionality as Ojcryo_unblur_parallel, but takes .tif files as inputs, adjusts using gain reference, bins, and then unblurs (tif2mrc->clip->binvol->unblur).
 
 ## OVERVIEW:
@@ -29,6 +27,13 @@ OJcryo is a project I have been slowly adding to over the past two years as I ha
 
 
 ![alt text](misc/OJcryo_relion_screen_2.png "Very simple interface.")
-  
+
+NOTE: OJcryo_relion_screen will run best when loading from a mounted drive, preferably an SSD. Screening over ssh will leave you pulling your hair out!
+
 
 #### OJcryo_relion_rm_duplicated:
+1) Navigate to a JoinStar/ folder that contains a join_particles.star or join_mics.star file.
+2) RUN... 
+   - (for particles): OJcryo_relion_rm_duplicates -p <starfile\>
+   - (for micrographs): OJcryo_relion_rm_duplicates -m <starfile\>
+3) Output: join_particles_no_duplicates.star for particles   //   join_mics_no_duplicates.star for micrographs
