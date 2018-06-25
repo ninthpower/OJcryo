@@ -1,14 +1,14 @@
 #!/bin/bash
 
-# v0.11 by Austin Dixon - Rockefeller University
+# v0.11 by Austin Dixon
 # This program runs unblur on .tif files in parallel in batch mode as opposed to on a single core.
 # It is dependent on: tif2mrc, clip, binvol, and unblur (v 1.0.2).
 
 ##### HELP/USAGE #####
 display_usage() {
   printf "*********************************
-Usage:\ndriftcorr_parallel <gainref> <cores> <ImgsPerStack> <A/pix> <DoseFilter?> <ExpsrPerFrm> <kV> <Pre-ExpsrAmount> <SaveAlignedFrames?> <ExpertOptions?>\n"
-  printf "\nEXAMPLE: driftcorr_parallel GR216_vf_cw90.mrc 8 30 1.2 YES 1.25 200 0 NO NO\n*********************************\n"
+Usage:\nOJcryo_unblur_tiff <gainref> <cores> <ImgsPerStack> <A/pix> <DoseFilter?> <ExpsrPerFrm> <kV> <Pre-ExpsrAmount> <SaveAlignedFrames?> <ExpertOptions?>\n"
+  printf "\nEXAMPLE: OJcryo_unblur_tiff GR216_vf_cw90.mrc 8 30 1.2 YES 1.25 200 0 NO NO\n*********************************\n"
 }
 
 # check whether user supplied help tag

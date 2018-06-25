@@ -1,20 +1,21 @@
-############################################################################
-# OJcryo_relion_rm_duplicates.sh removes all duplicate particles from 
-# a join_particles.star file made in RELION. It should be run directly
-# after joining star files *if* you get a warning that you have duplicates.
-#
-# Written by Austin Dixon - Rockefeller University
-#
-############################################################################
-
-
 #!/bin/bash
+
+############################################################################
+# OJcryo_relion_rm_duplicates.sh removes all duplicate particles from
+# a join_particles.star file made in RELION. Does the same for join_mics.star
+# files as well. It should be run directly after joining star files *if* you 
+# get a warning that you have duplicates.
+#
+# Written by Austin Dixon
+#
+###########################################################################
 
 display_usage()
 {
   printf "****************************\n- Navigate to a JoinStar/ folder that contains a join_particles.star or join_mics.star file."
-  printf "\n- RUN: OJcryo_relion_rm_duplicates join_particles.star"
-  printf "\n- Output is join_particles_no_duplicates.star\n****************************\n"
+  printf "\n- RUN (for particles): OJcryo_relion_rm_duplicates -p <star file>"
+  printf "\n- RUN (for micrographs): OJcryo_relion_rm_duplicates -m <star file>" 
+  printf "\n- Output: join_particles_no_duplicates.star for particles // join_mics_no_duplicates.star for micrographs\n****************************\n"
 }
 
 # check for input
@@ -28,59 +29,39 @@ fi
 # check whether user supplied help tag
 if [[ ($1 == "--help") ||  ($1 == "-h") ||  ($1 == "--h") || ($1 == "-help") || ($1 == "usage")]]
 then
-        display_usage
+    	display_usage
         exit 0
 fi
 
-#------------------------------------------#
+#---------------------------------------------------------#
+#			MAIN SCRIPT			  #
+#---------------------------------------------------------#
 
-### MAIN SCRIPT ###
-# get absolute paths of input
-INPUT="$(readlink -f $1)"
+mode=$1
+INPUT=$2
 
-# get number of particles before removing dupes
-wc -l $INPUT > garbage.txt
-read lines garbage < garbage.txt
-before=$(echo $lines)
+if [ $mode == "-m" ]	# micrograph mode
+then
+ awk '!a[$1]++' $INPUT > join_mics_no_duplicates.star
+ oldnum=($(wc $INPUT))		# get number of lines in old file
+ newnum=($(wc join_mics_no_duplicates.star))		# get number of lines in new file
+ deleted=$((${oldnum[0]} - ${newnum[0]} + 1))	# get number of particles eliminated ('-1' is because of newline made during append >>)
 
-# get header from star file (column names)
-linenum=0		# current line to read in
+ # Tell user what happened
+ printf "DONE: join_particles_no_duplicates.star was written, $deleted duplicates were removed.\n"
 
-### Cycle through lines until we find one that starts with a number ###
-# (that means it's the first particle! we do this so that no matter
-#  how Relion .star headers change, this program should still work!)
-while read line; do
- if [[ "$line" =~ ^_ || "$line" =~ ^data || "$line" =~ ^loop  || "$line" =~ ^\s*$ ]]			# regex says "if line starts (^) with "_" or the strings "data" or "loop" or it is an empty string"... 
- then
-	linenum=$[ $linenum + 1 ]			# increment line number counter because the current line is part of the header
- else 
-   break		# break while loop because we found the beginning of the particles/micrographs
- fi
-done <$INPUT					# pass input .star to the read line statement
+elif [ $mode == "-p" ]	# particle mode
+then
+ awk '{if (NF<= 2) {print}}' < $INPUT > join_particles_no_duplicates.star 
+ awk '!a[$6]++' $INPUT >> join_particles_no_duplicates.star
+ oldnum=($(wc $INPUT))		# get number of lines in old file
+ newnum=($(wc join_particles_no_duplicates.star))	# get number of lines in new file
+ deleted=$((${oldnum[0]} - ${newnum[0]} + 1))	# get number of particles eliminated ('+ 1' is because of newline made during append >>)
 
-# setting up to use sed to get rid of newline created after append
-d='d'
-sednum=$(($linenum + 1))$d
-
-# get .star header for linenum lines
-head -n $linenum $INPUT > join_particles_no_duplicates.star
-
-# remove newline created when appending the unique particles
-sed -i $sednum join_particles_no_duplicates.star
-
-###### HERE! WE NEED TO FIGURE OUR GETOPTS SO THAT WE CAN USE THE SAME SCRIPT FOR BOTH MICROGRAPHS/MOVIES AND PARTICLES ######
-# IF the input file only has one entry and 
-# get unique particles from the joined star file
-awk '!a[$6]++' $INPUT >> join_particles_no_duplicates.star
-
-# remove newline created when appending the unique particles
-sed -i $sednum join_particles_no_duplicates.star
-
-# get lines in file after removal of particles
-wc -l join_particles_no_duplicates.star > garbage.txt
-read lines garbage < garbage.txt
-after=$(echo $lines)
-
-# remove temp files
-rm garbage.txt
-echo "$[$after-$linenum] particles remaining after removal of $[$before-$after]."
+ # Tell user what happened
+ printf "DONE: join_mics_no_duplicates.star was written, $deleted duplicates were removed.\n"
+ 
+else
+ printf "Please specify a mode for removing duplicates!\n"
+ display_usage
+fi

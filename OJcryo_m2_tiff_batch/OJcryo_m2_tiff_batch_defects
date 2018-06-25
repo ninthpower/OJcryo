@@ -16,8 +16,8 @@ trunc=        # number of trailing frames to discard
 kV=           # Voltage in kV
 apix=         # Angstroms per pixel
 fmdose=       # frame dosage (in e/A^2)
-bin=          # binning amount\n"
-defects=      # defects text file
+bin=          # binning amount
+defects=      # defects text file\n"
 
   printf "\nEXAMPLE: motioncor2_tiff_batch GR216_vf_cw90.mrc 5 10 0.5 1 2 300 1.01 1.2 2 defects.txt\n*********************************\n"
 }
@@ -48,7 +48,7 @@ trunc=$6	# number of trailing frames to discard
 kV=$7		# Voltage in kV
 apix=$8		# Angstroms per pixel
 fmdose=$9	# frame dosage
-bin=${10}		# binning amount
+bin=${10}	# binning amount
 defects=${11}	# defects file
 
 
