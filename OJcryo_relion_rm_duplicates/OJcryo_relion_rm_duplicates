@@ -52,7 +52,7 @@ then
 
 elif [ $mode == "-p" ]	# particle mode
 then
- awk -F"\t" '!uniq[$0]++' $INPUT >> join_mics_no_duplicates.star
+ awk -F"\t" '!uniq[$0]++' $INPUT >> join_particles_no_duplicates.star
  oldnum=($(wc $INPUT))		# get number of lines in old file
  newnum=($(wc join_particles_no_duplicates.star))	# get number of lines in new file
  deleted=$((${oldnum[0]} - ${newnum[0]} + 1))	# get number of particles eliminated ('+ 1' is because of newline made during append >>)
