@@ -76,7 +76,7 @@ for i in *.tif; do
 ###################
 # " Drift correction "
 ###################
-  motioncor2 -InTiff ${i} -OutMrc motioncor_mrc/$file.mrc -Gain $gainref -Patch $patch $patch -Iter $iter -Tol $tol -FtBin $bin -FmDose $fmdose -PixSize $apix -Kv $kV -Throw $throw -Trunc $trunc -DefectFile $defects -Gpu 0 1 > output.txt
+  motioncor2 -InTiff ${i} -OutMrc motioncor_mrc/$file.mrc -Gain $gainref -Patch $patch $patch -Iter $iter -Tol $tol -FtBin $bin -FmDose $fmdose -PixSize $apix -Kv $kV -Throw $throw -Trunc $trunc -DefectFile $defects -Gpu 0 1 -OutStack 1 > output.txt
 
 
 ###############################################################

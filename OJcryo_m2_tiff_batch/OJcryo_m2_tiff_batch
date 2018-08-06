@@ -1,54 +1,161 @@
 #!/bin/bash
-
+# CURRENT: TRYING TO GET ALL OPTIONAL ARGUMENTS TO PASS TO MOTIONCORR CORRECTLY (STRING DOESN'T SEEM TO WORK:(...  )
 # v0.1 by Austin Dixon - Rockefeller University
 # This program jerry-rigs multi-tiff processing in Motioncor2.
 
 ##### HELP/USAGE #####
 display_usage() {
   printf "*********************************
-Usage:\nmotioncor2_tiff_batch <gainref> <patch> <iter> <tol> <throw> <trunc> <kV> <A/pix> <fmdose> <binning>\n
-gainref=      # gain reference
-patch=        # number of local alignment patches (patch x patch) motioncor2 will do on each image
-iter=         # number of alignment iterations, typically 10
-tol=          # tolerance of alignment accuracy, typically 0.5
-throw=        # number of initial frames to discard
-trunc=        # number of trailing frames to discard
-kV=           # Voltage in kV
-apix=         # Angstroms per pixel
-fmdose=       # frame dosage (in e/A^2)
-bin=          # binning amount\n"
+Usage:\n1) Navigate to the folder containing the .tif files you want to motion correct.\n2) Run Ojcryo_m2_tiff_batch [OPTIONS] [ARGUMENTS]\n
+OPTIONS:
+-g <Gain reference in .mrc format>
+-p <Number of local alignment patches (n x n)>
+-i <Number of iterations>
+-l <Alignment error pixel tolerance>
+-b <Number of Fourier domain bins>
+-f <Frame dosage (e/Å^2)>
+-a <Angstroms/px>
+-V <kV>
+-t <num starting frames to remove>
+-u <num ending frames to remove>
+-G <num GPUs to use [1...4]>
+   By default, Motioncorr2 will use 1 GPU.
 
-  printf "\nEXAMPLE: motioncor2_tiff_batch GR216_vf_cw90.mrc 5 10 0.5 1 2 300 1.01 1.2 2\n*********************************\n"
+-R <Degrees to rotate gain reference.>
+   0 = no rotation, default,
+   1 = rotate 90
+   2 = rotate 180
+   3 = rotate 270
+
+-F <Flip gain reference>
+   0 = no flipping, default,
+   1 = flip upside down (flip around horizontal axis)
+   2 = flip left right (flip around vertical axis)
+
+-d <Defects text file>
+   Pass the absolute reference of your microscope's
+   defects file to have those pixels corrected.
+
+-S <Save corrected stacks>
+   Save the corrected image stacks (as .mrc) in 
+   addition to the motion-corrected sums (micrographs)?
+
+-m
+   Motioncorr2 will take into account motion-induced blurring."
+
+  printf "\n\nEXAMPLE: OJcryo_m2_tiff_batch -g GR216_vf_cw90.mrc -p 5 -i 10 -l 0.5 -b 2 -f 1.2 -a 1.01 -V 300 -t 1 -u 2 -G 2\nmotioncorr2 equivalent: motioncor2 -InTiff movie_001.tif -OutMrc motioncor_mrc/aligned_movie_001.mrc -Gain GR216_vf_cw90.mrc -Patch 5 5 -Iter 10 -Tol 0.5 -FtBin 2 -FmDose 1.2 -PixSize 1.01 -Kv 300 -Throw 1 -Trunc 2 -Gpu 0 1\n*********************************\n"
 }
 
-# check whether user supplied help tag
-if [[ ($1 == "--help") ||  ($1 == "-h") ||  ($1 == "--h") || ($1 == "-help") ]]
+# help tag or no arguments -> usage
+if [[ ($1 == "--help") ||  ($1 == "-h") ||  ($1 == "--h") || ($1 == "-help")  ]]
 then
     	display_usage
         exit 0
-fi
-
-# check for argument count
-if [ $# -lt 10 ]
+elif [ $# == 0 ]
 then
-    	printf "\nYou supplied $# arguments, need 10!\n"
-        display_usage
-        exit 1
+	printf "You did not supply any parameters. Use --help to see usage...\n"
+	exit 0
 fi
 
+#add passed options to a string to be used as the parameters...
+options=""	# a string that will hold the results of the full command with options to Motioncorr2
 
-### Assign Variables ###
-gainref=$1	# gain reference
-patch=$2        # number of local alignment patches (patch x patch) motioncor2 will do on each image
-iter=$3		# number of alignment iterations, typically 10
-tol=$4		# tolerance of alignment accuracy, typically 0.5
-throw=$5	# number of initial frames to discard
-trunc=$6	# number of trailing frames to discard
-kV=$7		# Voltage in kV
-apix=$8		# Angstroms per pixel
-fmdose=$9	# frame dosage
-bin=${10}		# binning amount
+##### PARSING POSITIONAL ARGUMENTS #####
+while getopts ":g:p:i:l:t:u:V:a:f:b:R:F:G:d:Sm" opt; do
+ case $opt in
+  g)
+   gainref=$OPTARG >&2	# Gain reference (>&2 means shift argument positions by two)
+   options="$options-Gain $gainref "	# append options to command string
+   ;;
+  p)
+   patch=$OPTARG >&2	# patch x patch alignments
+   options="$options-Patch $patch $patch "
+   ;;
+  i)
+   iter=$OPTARG >&2	# number of iterations to run alignment
+   options="$options-Iter $iter "
+   ;;
+  l)
+   tol=$OPTARG >&2	# alignment error pixel tolerance
+   options="$options-Tol $tol "
+   ;;
+  t)
+   throw=$OPTARG >&2	# number of initial frames to throw away
+   options="$options-Throw $throw "
+   ;;
+  u)
+   trunc=$OPTARG >&2	# number of trailing frames to throw away
+   options="$options-Trunc $trunc "
+   ;;
+  V)
+   kV=$OPTARG >&2	# voltage in kV
+   options="$options-Kv $kV "
+   ;;
+  a)
+   apix=$OPTARG >&2	# Angstroms per pixel
+   option="$options-PixSize $apix "
+   ;;
+  f)
+   fmdose=$OPTARG >&2	# frame dosage for dose-weighting
+   options="$options-FmDose $fmdose "
+   ;;
+  b)
+   bin=$OPTARG >&2	# image binning through Fourier domain
+   options="$options-FtBin $bin "
+   ;;
+  R)
+   rotategain=$OPTARG >&2	# rotate gain reference
+   options="$options-RotGain $rotategain "
+   ;;
+  F)
+   flipgain=$OPTARG >&2		# flip gain reference
+   options="$options-FlipGain $flipgain "
+   ;;
+  G)
+   GPU=$OPTARG >&2		# number of GPUs to use
+   if [ $GPU == 1 ]
+   then
+    options="$options-Gpu 0 "	# use first GPU
+   elif [ $GPU == 2 ]
+   then
+    options="$options-Gpu 0 1 "	# use first two GPUs
+   elif [ $GPU == 3 ]
+   then
+    options="$options-Gpu 0 1 2 "	# use first three GPUs
+   elif [ $GPU == 4 ]
+   then
+    options="$options-Gpu 0 1 2 3 "	# use first four GPUs
+   else
+    options="$options-Gpu 0 "	# use first GPU
+   fi
+   ;;
+  d)
+   defects=$OPTARG >&2		# defects file for camera defects
+   options="$options-DefectFile $defects "
+   ;;
+  S)
+   options="$options-OutStack 1 " >&2		# Save corrected stacks along with sums
+   ;;
+  m)
+   options="$options-InFmMotion 1 " >&2	   #correct for motion-induced blurring of each frame (motioncorr v 1.1.0+)
+   ;;
+  \?)
+   printf "Invalid option: -$OPTARG" >&2
+   printf "\n"
+   display_usage
+   exit 1
+   ;;
+  :)
+   printf "Option -$OPTARG expected an argument." >&2
+   display_usage
+   exit 1
+   ;;
+esac
+done
 
+##DEBUG
+##printf "\nmotioncor2 -InTiff stuff.tif -OutMrc motioncor_mrc/file.mrc $options \n"
+##exit 0
 
 # get total number of tifs in this folder
 numtiffs=$(ls -F | grep .tif | wc -l)
@@ -74,7 +181,8 @@ for i in *.tif; do
 ###################
 # " Drift correction "
 ###################
-  motioncor2 -InTiff ${i} -OutMrc motioncor_mrc/$file.mrc -Gain $gainref -Patch $patch $patch -Iter $iter -Tol $tol -FtBin $bin -FmDose $fmdose -PixSize $apix -Kv $kV -Throw $throw -Trunc $trunc -Gpu 0 1 > output.txt
+## OLD VERSION  motioncor2 -InTiff ${i} -OutMrc motioncor_mrc/$file.mrc -Gain $gainref -Patch $patch $patch -Iter $iter -Tol $tol -FtBin $bin -FmDose $fmdose -PixSize $apix -Kv $kV -Throw $throw -Trunc $trunc -Gpu 0 1 > $file_m2output.txt
+  motioncor2 -InTiff ${i} -OutMrc motioncor_mrc/$file.mrc "$options" > $file_m2output.txt	# motioncor2 parses options independent of position, so a concatenated string of whatever the user entered will still work.
 
 
 ###############################################################
@@ -89,4 +197,3 @@ for i in *.tif; do
 done
 
 exit 1
-
