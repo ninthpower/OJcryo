@@ -1,6 +1,6 @@
 #!/bin/bash
-# CURRENT: TRYING TO GET ALL OPTIONAL ARGUMENTS TO PASS TO MOTIONCORR CORRECTLY (STRING DOESN'T SEEM TO WORK:(...  )
-# v0.1 by Austin Dixon - Rockefeller University
+# CURRENT: Optional arguments have been added, with options for stack saving (-S) and defects.txt files (-d).
+# v0.2 by Austin Dixon - Rockefeller University
 # This program jerry-rigs multi-tiff processing in Motioncor2.
 
 ##### HELP/USAGE #####
@@ -93,7 +93,7 @@ while getopts ":g:p:i:l:t:u:V:a:f:b:R:F:G:d:Sm" opt; do
    ;;
   a)
    apix=$OPTARG >&2	# Angstroms per pixel
-   option="$options-PixSize $apix "
+   options="$options-PixSize $apix "
    ;;
   f)
    fmdose=$OPTARG >&2	# frame dosage for dose-weighting
@@ -182,7 +182,8 @@ for i in *.tif; do
 # " Drift correction "
 ###################
 ## OLD VERSION  motioncor2 -InTiff ${i} -OutMrc motioncor_mrc/$file.mrc -Gain $gainref -Patch $patch $patch -Iter $iter -Tol $tol -FtBin $bin -FmDose $fmdose -PixSize $apix -Kv $kV -Throw $throw -Trunc $trunc -Gpu 0 1 > $file_m2output.txt
-  motioncor2 -InTiff ${i} -OutMrc motioncor_mrc/$file.mrc "$options" > $file_m2output.txt	# motioncor2 parses options independent of position, so a concatenated string of whatever the user entered will still work.
+##  motioncor2 -InTiff ${i} -OutMrc motioncor_mrc/$file.mrc "$options" > $file_m2output.txt	# motioncor2 parses options independent of position, so a concatenated string of whatever the user entered will still work.
+  motioncor2 -InTiff ${i} -OutMrc motioncor_mrc/$file.mrc $options >> output.txt	# motioncor2 parses options independent of position, so a concatenated string of whatever the user entered will still work.
 
 
 ###############################################################
