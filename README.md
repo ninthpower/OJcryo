@@ -47,15 +47,24 @@ Run: OJcryo_relion_rm_duplicates -p dupe_tester.star
 Now look at the join_particles_no_duplicates.star -> NO DUPLICATES!
 
 
+![alt text](misc/tif_batch.png ".tif Batch Motion Correction.")
 #### OJcryo_m2_tiff_batch:
+DEPENDENCIES: MOTIONCOR2
+We capture images from the microscope as .tif files. Unfortunately, UCSF's [MotionCor2](http://msg.ucsf.edu/em/software/motioncor2.html) only corrects .mrc files in batch mode. This script jerry-rigs .tif batch mode
+retaining many of the optional arguments of MotionCor2.
+
+There are many arguments possible for OJcryo_m2_tiff_batch so I simply encourage you to run the program with 
+the -h tag to get the full usage. If you are unfamiliar with the correlating options terminology in MotionCor2
+I would encourage you to read over their manual: http://msg.ucsf.edu/MotionCor2/MotionCor2-UserManual-05-03-2018.pdf
 
 #### OJcryo_unblur_tiff:
-We capture images from the microscope as .tif files, but unfortunately Nike Grigorieff's [UNBLUR](http://grigoriefflab.janelia.org/unblur), only does batch micrograph correction for .mrc files. With this program, not only is a .tif batch mode implemented, but it also leverages subprocesses to align your movies up to 6x faster (!) (based on my prelim testing).
+DEPENDENCIES: tif2mrc, clip, binvol, and unblur (v 1.0.2)
+Like Motioncor2, Niko Grigorieff's [UNBLUR](http://grigoriefflab.janelia.org/unblur) only does batch micrograph correction for .mrc files. With this program, not only is .tif batch mode implemented, but it also leverages subprocesses to align your movies up to 6x faster (!) (based on my prelim testing).
 
 To run:
 1) Navigate to the directory where all your TIFFs are.
 2) Fill in the following command with your parameters: 
 - OJcryo_unblur_tiff \<gainref\> \<cores\> \<ImgsPerStack\> \<A/pix\> \<DoseFilter?\> \<ExpsrPerFrm\> \<kV\> \<Pre-ExpsrAmount\> \<SaveAlignedFrames?\> \<ExpertOptions?\>
-- AS A NOTE: In my testing, the speed gained by dedicating higher numbers to the \<cores\> argument greatly diminishes after 16. 8 cores appears to be the best bang for your buck, but if you have cores to burn go for it.
+- NOTE: My tests showed that the speed gained from more \<cores\> greatly diminishes after 16, but YMMV
 
 3) The aligned .mrc files will be written to a folder called "driftcorr_mrc\\"
