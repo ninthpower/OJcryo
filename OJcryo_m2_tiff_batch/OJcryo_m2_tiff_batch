@@ -1,9 +1,10 @@
 #!/bin/bash
 # CURRENT: Optional arguments have been added, with options for stack saving (-S) and defects.txt files (-d).
-# This program jerry-rigs multi-tiff processing in Motioncor2.
 
 #########################################################################
-# OJcryo_m2_tiff_batch v0.2, Copyright (C) 2018 Austin Dixon - Rockefeller University
+#    OJcryo_m2_tiff_batch v0.2 jerry-rigs multi-tiff processing in Motioncor2.
+#
+#    Copyright (C) 2018 Austin Dixon - Rockefeller University
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
