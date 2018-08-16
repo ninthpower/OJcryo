@@ -1,12 +1,24 @@
 #!/bin/bash
 
 ############################################################################
-# OJcryo_relion_rm_duplicates.sh removes all duplicate particles from
-# a join_particles.star file made in RELION. Does the same for join_mics.star
-# files as well. It should be run directly after joining star files *if* you 
-# get a warning that you have duplicates.
+#    OJcryo_relion_rm_duplicates.sh removes all duplicate particles from
+#    a joined .star files from RELION. It should be run directly after 
+#    joining star files *only if* you get a warning that you have duplicates.
 #
-# Written by Austin Dixon
+#    Copyright (C) 2018 Austin Dixon - Rockefeller University
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 ###########################################################################
 
@@ -37,15 +49,15 @@ fi
 #			MAIN SCRIPT			  #
 #---------------------------------------------------------#
 
-mode=$1
-INPUT=$2
+mode=$1		# remove duplicate particles (-p) or micrographs (-m)
+INPUT=$2	# joined.star
 
 if [ $mode == "-m" ]	# micrograph mode
 then
  awk -F"\t" '!uniq[$0]++' $INPUT >> join_mics_no_duplicates.star
- oldnum=($(wc $INPUT))		# get number of lines in old file
- newnum=($(wc join_mics_no_duplicates.star))		# get number of lines in new file
- deleted=$((${oldnum[0]} - ${newnum[0]} + 1))	# get number of particles eliminated ('-1' is because of newline made during append >>)
+ oldnum=($(wc $INPUT))							# get number of lines in old file
+ newnum=($(wc join_mics_no_duplicates.star))				# get number of lines in new file
+ deleted=$((${oldnum[0]} - ${newnum[0]} + 1))				# get number of particles eliminated ('-1' is because of newline made during append >>)
 
  # Tell user what happened
  printf "DONE: join_mics_no_duplicates.star was written, $deleted duplicates were removed.\n"
@@ -53,9 +65,9 @@ then
 elif [ $mode == "-p" ]	# particle mode
 then
  awk '!NF || !seen[$1, $2, $6]++' $INPUT >> join_particles_no_duplicates.star
- oldnum=($(wc $INPUT))		# get number of lines in old file
- newnum=($(wc join_particles_no_duplicates.star))	# get number of lines in new file
- deleted=$((${oldnum[0]} - ${newnum[0]} + 1))	# get number of particles eliminated ('+ 1' is because of newline made during append >>)
+ oldnum=($(wc $INPUT))							# get number of lines in old file
+ newnum=($(wc join_particles_no_duplicates.star))			# get number of lines in new file
+ deleted=$((${oldnum[0]} - ${newnum[0]} + 1))				# get number of particles eliminated ('+ 1' is because of newline made during append >>)
 
  # Tell user what happened
  printf "DONE: join_mics_no_duplicates.star was written, $deleted duplicates were removed.\n"

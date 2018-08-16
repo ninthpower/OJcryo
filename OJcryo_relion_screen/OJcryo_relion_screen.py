@@ -1,10 +1,26 @@
 #!/usr/bin/env python2.7
 
-# This program is used to screen micrographs. It takes a star file of micrographs
-# that have been imported into RELION, then writes a new one with only the
-# micrographs you want to use :)
+############################################################################
+#    This program is a VERY light-weight micrograph screening program. 
+#    It takes a star file of micrographs that have been imported into RELION, 
+#    then writes a new one with only the micrographs you want to use.
 #
-# By Austin Dixon
+#    Copyright (C) 2018 Austin Dixon - Rockefeller University
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+###########################################################################
 
 ##### IMPORTS AND HELPER FUNCTIONS #####
 import Tkinter
